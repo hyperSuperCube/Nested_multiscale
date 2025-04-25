@@ -1,0 +1,233 @@
+\documentclass[aspectratio=169]{beamer}
+
+\input{./template/macros.tex}
+
+\usepackage{cancel}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows}
+% Define colors for code
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% C++ code style
+\lstdefinestyle{cppstyle}{
+	language=C++,
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{blue},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\newif\ifmovies%
+\moviestrue%
+%\moviesfalse
+
+\newif\ifsubs%
+\substrue%
+%\subsfalse
+
+\newif\ifnotes%
+\notestrue%
+%\notesfalse
+
+\usepackage{xfrac}
+\usepackage{subfigure}
+\usepackage{xcolor}	
+\usepackage{stmaryrd}				%definir novas cores
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+
+\usepackage{tikz}
+\usetikzlibrary{tikzmark}
+\usepackage[absolute,overlay]{textpos}
+
+\begin{document}
+
+
+%======================================================================
+\begin{frame}[c]\frametitle{}
+
+    \vspace{15mm}
+    \begin{center}
+    \Large{\textsc{
+    Leverage Turbulence measuring and probing
+    }}
+    \end{center}
+    \vspace{10mm}
+    \begin{center}
+    Hongkai Zheng, Zirui Wang
+    \end{center}
+
+    \vspace{0mm}
+    \begin{center}
+    April $11^{th}$ 2025
+    \end{center}
+\end{frame}
+
+\begin{frame}[c]\frametitle{Goal}
+	\textbf{\textcolor{red}{Assimilating Observed data into dynamical model to reconstruct high precision data}}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Review
+				\begin{itemize}
+					\item 2019 Stanford University + Sandia Lab using 4D-var to assimilate a jet flow with Re 13500 into LES to eliminate numerical sensitivity of turbulence
+					\item 2022 Johns Hopkins University and Maryland University uses Ensemble-variational method to assimilate wall-pressure data in LES simulation under Mach 6
+					\item 2024 Aoyama Gakuin University and Nagoya University using 2D PIV data to tune RANs model parameters under Mach 2 
+				\end{itemize}
+			\end{itemize}
+		\end{column}
+	\begin{column}{0.5\textwidth}
+		\begin{itemize}
+		\item Our Target:
+		\begin{itemize}
+			\item Aiming on Turbulence field reconstruction on Inertia range
+			\item Proposing new Computational model and data assimilation approaches 
+			\item Demonstrate the potential of precision reconstruction of flow field property in highly non-linear flow situations with coarse measurement.
+			\item Make engineering compatible measuring tool chains
+		\end{itemize}
+	\end{itemize}
+	\end{column}
+	\end{columns}
+\end{frame}
+\begin{frame}[c]\frametitle{Innovations in CFD}
+	\textbf{\textcolor{red}{Using nested multiscale to arrive at DNS accuracy while maintain a near LES cost}}
+	\begin{itemize}
+		\item Governing equation
+		\begin{align*}
+			\frac{\partial u}{\partial t}+(u\cdot{\nabla})u &= \nu\Delta u + f\\
+			\nabla\cdot u &= 0
+		\end{align*}
+		\item Periodic boundary with Isotropic turbulence initialization (Rogallo)
+		\item Nested multiscale phase 
+		$$
+		\begin{aligned}
+			& \frac{\partial \boldsymbol{\theta}^\epsilon}{\partial t}+\left(\mathbf{u}^\epsilon \cdot \nabla\right) \boldsymbol{\theta}^\epsilon=\mathbf{0} \\
+			& \left.\boldsymbol{\theta}^\epsilon\right|_{t=0}=\mathbf{x}
+		\end{aligned}
+		$$
+		\begin{equation*}
+			\boldsymbol{\theta}^\epsilon=\overline{\boldsymbol{\theta}}(t, \mathbf{x}, \tau)+\epsilon \widetilde{\boldsymbol{\theta}}(t, \overline{\boldsymbol{\theta}}, \tau, \mathbf{z})\quad \mathbf{z}=\frac{\overline{\boldsymbol{\theta}}}{\epsilon}, \quad \tau=\frac{t}{\epsilon},\quad \tilde{\boldsymbol{\theta}}(\boldsymbol{z}) = \tilde{\boldsymbol{\theta}}(\boldsymbol{z}+\boldsymbol{1})\quad \int\tilde{\boldsymbol{\theta}}(\boldsymbol{z}) d\boldsymbol{z} = 0
+		\end{equation*}
+		\item Soul: The multiscale structure is convected by mean flow and inducing cell (sub-grid) homogenization problem, which homogenizes mean flow.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[c]\frametitle{Algorithm}
+	\begin{itemize}
+		\item Step 1. At t = 0 and $\tau = 0$, we have 
+		\begin{equation*}
+			\boldsymbol{\theta}_{i n t}=\mathbf{x}, \quad \mathbf{u}_{i n t}=\mathbf{U}, \quad \mathbf{w}_{i n t}=\mathbf{W}, \quad \mathbf{\Theta}_{\text {int }}=\mathbf{0}, \quad \mathcal{A}=\mathcal{I} .
+		\end{equation*}
+		\item Step 2. Solve cell problem for (w, q)
+		\begin{columns}
+			\begin{column}{0.7\textwidth}
+				\begin{align*}
+					\partial_\tau \mathbf{w}+D_z \mathbf{w} \mathcal{A} \mathbf{w}+\mathcal{A}^{\top} \nabla_z q-\frac{\nu}{\epsilon} \nabla \cdot\left(\mathcal{A} \mathcal{A}^{\top} \nabla_z \mathbf{w}\right)&=\mathbf{0}\\
+					\left(\mathcal{A}^{\top} \nabla_z\right) \cdot \mathbf{w}&=0\\
+					\left.\mathbf{w}\right|_{\tau=\tau_m}&=\mathbf{w}_{i n t}
+				\end{align*}
+			\end{column}
+			\begin{column}{0.3\textwidth}
+				\begin{align*}
+					\begin{aligned}
+						& \partial_\tau \boldsymbol{\Theta}+\left(\mathcal{I}+D_z \boldsymbol{\Theta}\right) D_x \overline{\boldsymbol{\theta}} \mathbf{w}=\mathbf{0} . \\
+						& \left.\boldsymbol{\Theta}\right|_{\tau=t=0}=\boldsymbol{\Theta}_{\text {int }} .
+					\end{aligned}
+				\end{align*}
+			\end{column}
+		\end{columns}
+		
+		\item Step 3. Update large scale solution
+				\begin{align*}
+					\begin{aligned}
+						\partial_t \mathbf{u}+\left(\mathbf{u} \cdot \nabla_x\right) \mathbf{u}+\nabla_x p+\nabla_x \cdot\left\langle[\mathbf{w} \otimes \mathbf{w}]_{\Delta}^*\right\rangle-\nu \Delta \mathbf{u}&=\mathbf{f} \\
+						\nabla_x \cdot \mathbf{u}&=0\\
+						 \left.\mathbf{u}\right|_{t=t_m}&=\mathbf{u}_{i n t}
+					\end{aligned}
+				\end{align*}
+			
+				\begin{align*}
+					\begin{aligned}
+						\partial_t \boldsymbol{\theta}+\left(\mathbf{u} \cdot \nabla_x\right) \boldsymbol{\theta}+\epsilon \nabla_x \cdot\left\langle[\boldsymbol{\Theta} \otimes \mathbf{w}]_{\Delta}^*\right\rangle&=\mathbf{0} \\
+						 \left.\boldsymbol{\theta}\right|_{t=t_m}&=\boldsymbol{\theta}_{\text {int }}
+					\end{aligned}
+				\end{align*}
+	\end{itemize}
+\end{frame}
+\begin{frame}
+	\begin{itemize}
+		\item Step 4. Go back to step 2 and start over
+		\begin{equation*}
+			\begin{aligned}
+				\boldsymbol{\theta}_{\text {int }} & =\left.\boldsymbol{\theta}\right|_{t=t_{m+1}}, & \mathbf{u}_{i n t} & =\left.\mathbf{u}\right|_{t=t_{m+1}}, \quad \mathbf{w}_{i n t}=\left.\mathbf{w}\right|_{\tau=\tau_{m+1}}, \\
+				\boldsymbol{\Theta}_{\text {int }} & =\left.\boldsymbol{\Theta}\right|_{\tau=\tau_{m+1}}, & \mathcal{A} & =\left.D_x \boldsymbol{\theta}\right|_{t=t_{m+1}} .
+			\end{aligned}
+		\end{equation*}
+		\item Adaptive Technique: Solve the cell problem when needed
+		\begin{itemize}
+			\item The Jacobian of inverse flow map $D_x \boldsymbol{\theta}$ determines the significance of cell problem
+			\begin{equation*}
+				\begin{aligned}
+					& \partial_\tau \mathbf{w}+\left(D_x \boldsymbol{\theta} \mathbf{w} \cdot \nabla_z\right) \mathbf{w}+D_x \boldsymbol{\theta}^{\top} \nabla_z q-\frac{\nu}{\epsilon} \nabla_z \cdot\left(D_x \boldsymbol{\theta} D_x \boldsymbol{\theta}^{\top} \nabla_z \mathbf{w}\right)=\mathbf{0}, \\
+					& \left(D_x \boldsymbol{\theta}^{\top} \nabla_z\right) \cdot \mathbf{w}=0 \\
+					& \left.\mathbf{w}\right|_{\tau=t=0}=\mathbf{W}(\mathbf{x}, \mathbf{z}) .
+				\end{aligned}
+			\end{equation*}
+			\item Evaluate $G=\left\|\left(D_x \theta\right)_n^T\left(D_x \theta\right)_n-I\right\|$ at time t = n as the standard
+		\end{itemize}
+		\item Strength: No parameter tuning, DNS comparable accuracy. $\epsilon$ determines the background mesh density.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[c]\frametitle{Result}
+	\begin{figure}[!htb]
+		\begin{minipage}{0.49\textwidth}
+			\centering
+			\includegraphics[width=1\linewidth]{Figures/spec1.png}
+			
+		\end{minipage}\hfill
+		\begin{minipage}{0.49\textwidth}
+			\centering
+			\includegraphics[width=1\linewidth]{Figures/spec2.png}
+			
+		\end{minipage}
+	\end{figure}
+\end{frame}
+
+\begin{frame}[c]\frametitle{Innovations in Data assimilation}
+	
+\end{frame}
+
+\begin{frame}[c]\frametitle{Algorithm}
+	
+\end{frame}
+
+\begin{frame}[c]\frametitle{Result}
+	
+\end{frame}
+
+%======================================================================
+\input{./template/acknowledgement.tex}
+
+
+%======================================================================
+
+
+\end{document}
