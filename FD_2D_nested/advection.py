@@ -1,10 +1,10 @@
 import numpy as np
 import NS as ns
-nx = 200
-ny = 200
+nx = 500
+ny = 500
 
-xp = np.linspace(-2,2,nx)
-yp = np.linspace(-2,2,ny)
+xp = np.linspace(-5,5,nx)
+yp = np.linspace(-5,5,ny)
 
 dx = xp[1] - xp[0]
 dy = yp[1] - yp[0]
@@ -30,12 +30,12 @@ u = ns.Field(field=U0, field_mesh=(xp, yp), grid_sizing=[dx,dy],
 
 cx = -1
 cy = 1
-T = 1
-dt = 0.005
+T = 0.2
+dt = 0.0001
 t = 0
 while t < T:
     print(t)
-    u = u - u.grad_x_2()*(cx*dt) - u.grad_y_2()*(cy*dt)
+    u = u + u.laplace_2()*(dt)
     t += dt
 
 u.plot_field("u1", "X", "Y", "Z")

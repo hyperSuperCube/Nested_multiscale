@@ -51,12 +51,7 @@ class Field:
         self.time = time
         self.boundary = boundary
         self.store_loc = store_loc
-        if self.dim == 1:
-            self.interpolator = CubicSpline(self.field_mesh[0], self.field, bc_type='natural')
-        elif self.dim == 2:
-            self.interpolator = RectBivariateSpline(self.field_mesh[0], self.field_mesh[1], self.field)
-        else:
-            pass # TO DO
+        self.interpolator = None
         field_shape = self.field.shape
         if do_interp:
             # Construct a new mesh and interpolate
@@ -124,7 +119,6 @@ class Field:
                 return  (np.diag(np.ones(nx-1),1) - np.diag(np.ones(nx-1),-1))*1/2/self.grid_sizing[self.coord_idx[0]],\
                         (np.diag(np.ones(ny-1),1) - np.diag(np.ones(ny-1),-1))*1/2/self.grid_sizing[self.coord_idx[1]],\
                         (np.diag(np.ones(nz-1),1) - np.diag(np.ones(nz-1),-1))*1/2/self.grid_sizing[self.coord_idx[2]]
-        
         if self.order == 4:
             if self.dim == 1:
                 nx = self.mesh_size[self.coord_idx[0]]
@@ -142,6 +136,124 @@ class Field:
                         (8*np.diag(np.ones(ny-1),1) + np.diag(-np.ones(ny-2),2) - 8*np.diag(np.ones(ny-1),-1) + np.diag(np.ones(ny-2),-2))*1/12/self.grid_sizing[self.coord_idx[1]],\
                         (8*np.diag(np.ones(nz-1),1) + np.diag(-np.ones(nz-2),2) - 8*np.diag(np.ones(nz-1),-1) + np.diag(np.ones(nz-2),-2))*1/12/self.grid_sizing[self.coord_idx[2]]
 
+    def second_derivative_mat(self):
+        ax = self.coord_idx[0]
+        if self.order == 2:
+            # classic three‐point stencil:  [1, -2, 1] / Δx²
+            if self.dim == 1:
+                nx = self.mesh_size[ax]
+                dx = self.grid_sizing[ax]
+                return (
+                    np.diag(np.ones(nx-1), 1)
+                    - 2*np.eye(nx)
+                    + np.diag(np.ones(nx-1), -1)
+                ) / dx**2
+
+            if self.dim == 2:
+                nx = self.mesh_size[self.coord_idx[0]]
+                ny = self.mesh_size[self.coord_idx[1]]
+                dx = self.grid_sizing[self.coord_idx[0]]
+                dy = self.grid_sizing[self.coord_idx[1]]
+                D2x = (
+                    np.diag(np.ones(nx-1), 1)
+                    - 2*np.eye(nx)
+                    + np.diag(np.ones(nx-1), -1)
+                ) / dx**2
+                D2y = (
+                    np.diag(np.ones(ny-1), 1)
+                    - 2*np.eye(ny)
+                    + np.diag(np.ones(ny-1), -1)
+                ) / dy**2
+                return D2x, D2y
+
+            if self.dim == 3:
+                nx = self.mesh_size[self.coord_idx[0]]
+                ny = self.mesh_size[self.coord_idx[1]]
+                nz = self.mesh_size[self.coord_idx[2]]
+                dx = self.grid_sizing[self.coord_idx[0]]
+                dy = self.grid_sizing[self.coord_idx[1]]
+                dz = self.grid_sizing[self.coord_idx[2]]
+                D2x = (
+                    np.diag(np.ones(nx-1), 1)
+                    - 2*np.eye(nx)
+                    + np.diag(np.ones(nx-1), -1)
+                ) / dx**2
+                D2y = (
+                    np.diag(np.ones(ny-1), 1)
+                    - 2*np.eye(ny)
+                    + np.diag(np.ones(ny-1), -1)
+                ) / dy**2
+                D2z = (
+                    np.diag(np.ones(nz-1), 1)
+                    - 2*np.eye(nz)
+                    + np.diag(np.ones(nz-1), -1)
+                ) / dz**2
+                return D2x, D2y, D2z
+
+        if self.order == 4:
+            # five‐point 4th‐order stencil: [-1, 16, -30, 16, -1]/(12 Δx²)
+            if self.dim == 1:
+                nx = self.mesh_size[ax]
+                dx = self.grid_sizing[ax]
+                return (
+                    -np.diag(np.ones(nx-2),  2)
+                    +16*np.diag(np.ones(nx-1), 1)
+                    -30*np.eye(nx)
+                    +16*np.diag(np.ones(nx-1),-1)
+                    -np.diag(np.ones(nx-2), -2)
+                ) / (12*dx**2)
+
+            if self.dim == 2:
+                nx = self.mesh_size[self.coord_idx[0]]
+                ny = self.mesh_size[self.coord_idx[1]]
+                dx = self.grid_sizing[self.coord_idx[0]]
+                dy = self.grid_sizing[self.coord_idx[1]]
+                D2x4 = (
+                    -np.diag(np.ones(nx-2),  2)
+                    +16*np.diag(np.ones(nx-1), 1)
+                    -30*np.eye(nx)
+                    +16*np.diag(np.ones(nx-1),-1)
+                    -np.diag(np.ones(nx-2), -2)
+                ) / (12*dx**2)
+                D2y4 = (
+                    -np.diag(np.ones(ny-2),  2)
+                    +16*np.diag(np.ones(ny-1), 1)
+                    -30*np.eye(ny)
+                    +16*np.diag(np.ones(ny-1),-1)
+                    -np.diag(np.ones(ny-2), -2)
+                ) / (12*dy**2)
+                return D2x4, D2y4
+
+            if self.dim == 3:
+                nx = self.mesh_size[self.coord_idx[0]]
+                ny = self.mesh_size[self.coord_idx[1]]
+                nz = self.mesh_size[self.coord_idx[2]]
+                dx = self.grid_sizing[self.coord_idx[0]]
+                dy = self.grid_sizing[self.coord_idx[1]]
+                dz = self.grid_sizing[self.coord_idx[2]]
+                D2x4 = (
+                    -np.diag(np.ones(nx-2),  2)
+                    +16*np.diag(np.ones(nx-1), 1)
+                    -30*np.eye(nx)
+                    +16*np.diag(np.ones(nx-1),-1)
+                    -np.diag(np.ones(nx-2), -2)
+                ) / (12*dx**2)
+                D2y4 = (
+                    -np.diag(np.ones(ny-2),  2)
+                    +16*np.diag(np.ones(ny-1), 1)
+                    -30*np.eye(ny)
+                    +16*np.diag(np.ones(ny-1),-1)
+                    -np.diag(np.ones(ny-2), -2)
+                ) / (12*dy**2)
+                D2z4 = (
+                    -np.diag(np.ones(nz-2),  2)
+                    +16*np.diag(np.ones(nz-1), 1)
+                    -30*np.eye(nz)
+                    +16*np.diag(np.ones(nz-1),-1)
+                    -np.diag(np.ones(nz-2), -2)
+                ) / (12*dz**2)
+                return D2x4, D2y4, D2z4
+
 
     def grad_x_2(self):
         '''
@@ -155,7 +267,7 @@ class Field:
             The resulting data is still interior, the boundary informaiton is added on rhs
         '''
         bc = self.boundary
-        if self.dim == 1:  
+        if self.dim == 1:
             Dx = self.first_derivative_mat()
             ulb, urb = 0, 0
             if bc['type'][0] == "Dirichlet":
@@ -165,6 +277,7 @@ class Field:
             dfdx = Dx@self.field
             dfdx[0]  -= ulb/2/self.grid_sizing[self.coord_idx[0]]
             dfdx[-1] += urb/2/self.grid_sizing[self.coord_idx[0]]
+            # FIX ME The new boundary condition are all convert to Dirichlet !!!
             return Field(dfdx, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
@@ -216,27 +329,85 @@ class Field:
             if idx == 0 and idy == 1:
                 dfdy[:,0] -= ubb/2/self.grid_sizing[idy]
                 dfdy[:,-1] += uub/2/self.grid_sizing[idy]
-                # print(uub)
             return Field(dfdy, self.field_mesh, self.grid_sizing, 
                              self.coord_idx, self.order, self.time, 
                              self.boundary, self.store_loc, False)
-
 
     def grad_z_2(self):
         pass
 
     def laplace_2(self):
+        bc = self.boundary
         if self.dim == 1:
-            # Calculate d^2u/dx^2
-            pass
+            D2x = self.second_derivative_mat()
+            ulb, urb = 0, 0
+            if bc['type'][0] == "Dirichlet":
+                ulb = self.enforce_dirichlet_2(0)
+            if bc['type'][1] == "Dirichlet":
+                urb = self.enforce_dirichlet_2(1)
+            d2fdx2 = D2x@self.field
+            d2fdx2[0]  += ulb/(self.grid_sizing[self.coord_idx[0]])**2
+            d2fdx2[-1] += urb/(self.grid_sizing[self.coord_idx[0]])**2
+            return Field(d2fdx2, self.field_mesh, self.grid_sizing, 
+                             self.coord_idx, self.order, self.time, 
+                             self.boundary, self.store_loc, False)
         elif self.dim == 2:
-            # Calculate d^2u/dx^2+d^2u/dy^2
-            pass
+            D2x, D2y = self.second_derivative_mat()
+            ulb, urb, ubb, uub = 0,0,0,0
+            idx, idy = self.coord_idx[0], self.coord_idx[1]
+            if bc['type'][0] == "Dirichlet":
+                ulb = self.enforce_dirichlet_2(0)
+            if bc['type'][1] == "Dirichlet":
+                urb = self.enforce_dirichlet_2(1)
+            if bc['type'][2] == "Dirichlet":
+                ubb = self.enforce_dirichlet_2(2)
+            if bc['type'][3] == "Dirichlet":
+                uub = self.enforce_dirichlet_2(3)
+            d2fdx2, d2fdy2 = 0, 0
+            if idx == 0:
+                d2fdx2 = D2x @ self.field
+                d2fdy2 = self.field @ (D2y.T)
+                d2fdx2[0]  += ulb/(self.grid_sizing[idx])**2
+                d2fdx2[-1] += urb/(self.grid_sizing[idx])**2
+
+                d2fdy2[:,0]  += ubb/(self.grid_sizing[idy])**2
+                d2fdy2[:,-1] += uub/(self.grid_sizing[idy])**2
+            elif idx == 1:
+                d2fdx2 = self.field @ (D2x.T)
+                d2fdy2 = D2y @ self.field
+                d2fdx2[:,0]  += ulb/(self.grid_sizing[idx])**2
+                d2fdx2[:,-1] += urb/(self.grid_sizing[idx])**2
+
+                d2fdy2[0]  += ubb/(self.grid_sizing[idy])**2
+                d2fdy2[-1] += uub/(self.grid_sizing[idy])**2
+            return Field(d2fdx2+d2fdy2, self.field_mesh, self.grid_sizing, 
+                        self.coord_idx, self.order, self.time, 
+                        self.boundary, self.store_loc, False)
         elif self.dim == 3:
             # Calculate d^2u/dx^2+d^2u/dy^2+d^2u/dz^2
             pass
 
+    def solve_possion_field_2(self, rhs_field, tol, method, iter):
+        pass
+    
+    # This is the general purpose interpolator, using convolution to get a new Field instance
+    def interpolator_general(self, new_loc):
+        def x_average():
+            pass
+        def y_average():
+            pass
+        def convolution():
+            pass
+        pass
+
+    ## The following 3 interpolator are mearly used for initilization NOT GENRAL PURPOSE!! (for calling simplicity)
     def interpolate_to_x_surf(self):
+        if self.dim == 1:
+            self.interpolator = CubicSpline(self.field_mesh[0], self.field, bc_type='natural')
+        elif self.dim == 2:
+            self.interpolator = RectBivariateSpline(self.field_mesh[0], self.field_mesh[1], self.field)
+        else:
+            pass # TO DO
         if self.dim == 1:
             x_new = self.field_mesh[0][1:-1]
             self.field = self.interpolator(x_new)
@@ -259,6 +430,10 @@ class Field:
         
     def interpolate_to_y_surf(self):
         if self.dim == 2:
+            self.interpolator = RectBivariateSpline(self.field_mesh[0], self.field_mesh[1], self.field)
+        elif self.dim == 3:
+            pass # TO DO
+        if self.dim == 2:
             idx = self.coord_idx[0]
             idy = self.coord_idx[1]
             hx = self.grid_sizing[idx]
@@ -280,6 +455,12 @@ class Field:
         pass
 
     def interpolate_to_center(self):
+        if self.dim == 1:
+            self.interpolator = CubicSpline(self.field_mesh[0], self.field, bc_type='natural')
+        elif self.dim == 2:
+            self.interpolator = RectBivariateSpline(self.field_mesh[0], self.field_mesh[1], self.field)
+        else:
+            pass # TO DO
         if self.dim == 1:
             return self.interpolate_to_x_surf()
         elif self.dim == 2:
@@ -481,9 +662,10 @@ def _(self: Field, other_field: Field) -> Field:
                             self.boundary, self.store_loc, False)
     else:
         # Interpolate mesh of other field to same location of the current mesh
+        print("Not recommended in numerical comupation! Unexpected behaviour may arise.")
         if self.dim ==1:
             new_x = self.field_mesh[0]
-            interp = other_field.interpolatot
+            interp = other_field.interpolator
             new_field_other = interp(new_x)
             return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
@@ -503,12 +685,10 @@ def _(self: Field, other_field: Field) -> Field:
 @Field.__add__.register
 def _(self: Field, other_field: Field) -> Field:       
     if (self.store_loc == other_field.store_loc):
-            
             """
                 FIX ME
             """
             ## Boundary needs to be considered
-            
             return Field(self.field+other_field.field, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
