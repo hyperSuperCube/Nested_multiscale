@@ -30,66 +30,69 @@ from matplotlib import pyplot as plt
 # dy = yp[1] - yp[0]
 # Yp, Xp = np.meshgrid(xp, yp)
 
-# fx = np.cos(2*Xp.T)*np.sin(3*Yp.T)
 
 
-# dfx = -2*np.sin(2*Xp.T)*np.sin(3*Yp.T)
-# print(dfx[0])
-# fl = lambda y, t: np.cos(-2)*np.sin(3*(y))
-# fr = lambda y, t: np.cos(2)*np.sin(3*(y))
 
-# fb = lambda x_, t: np.cos(2*(x_))*np.sin(3*(-np.pi))
-# fu = lambda x_, t: np.cos(2*(x_))*np.sin(3*np.pi)
+nx = 150
+ny = 150
+
+xp = np.linspace(-1,1,nx)
+yp = np.linspace(-np.pi,np.pi,ny)
+
+dx = xp[1] - xp[0]
+dy = yp[1] - yp[0]
+
+Xp, Yp = np.meshgrid(xp, yp, indexing='ij')
+
+fx = np.cos(2*Xp)*np.sin(2*Yp)
 
 
-# boundary = {
-#     'type' : ["Dirichlet", "Dirichlet","Dirichlet", "Dirichlet"],
-#     'value' : [fl, fr, fb, fu]
-# }
+fl = lambda y, t: np.cos(-2)*np.sin(2*(y))
+fr = lambda y, t: np.cos(2)*np.sin(2*(y))
+
+fb = lambda x_, t: np.cos(2*(x_))*np.sin(2*(-np.pi))
+fu = lambda x_, t: np.cos(2*(x_))*np.sin(2*np.pi)
 
 
-# nx = 200
-# ny = 200
+boundary = {
+    'type' : ["Dirichlet", "Dirichlet","Dirichlet", "Dirichlet"],
+    'value' : [fl, fr, fb, fu]
+}
 
-# xp = np.linspace(-1,1,nx)
-# yp = np.linspace(-np.pi,np.pi,ny)
+u = ns.Field(field=fx, field_mesh=(xp, yp), grid_sizing=[dx,dy], 
+            coord_idx=[0,1], order=2, time=0,
+            boundary=boundary, store_loc='center', do_interp=True)
 
-# dx = xp[1] - xp[0]
-# dy = yp[1] - yp[0]
+u2 = ns.Field(field=fx, field_mesh=(xp, yp), grid_sizing=[dx,dy], 
+            coord_idx=[0,1], order=2, time=0,
+            boundary=boundary, store_loc='y_surf', do_interp=True)
 
-# Xp, Yp = np.meshgrid(xp, yp, indexing='ij')
+u3 = ns.Field(field=fx, field_mesh=(xp, yp), grid_sizing=[dx,dy], 
+            coord_idx=[0,1], order=2, time=0,
+            boundary=boundary, store_loc='x_surf', do_interp=True)
+# grad_u = u.grad_x_2()
+grad_u = u.grad_y_2()
+grad_u2 = u2.grad_x_2()
+grad_u3 = u3.grad_y_2()
+# grad_u.plot_field("grady", "X", "Y", "Z")
 
-# fx = np.cos(2*Xp)*np.sin(3*Yp)
+# new_g = grad_u-grad_u2
+# new_g.plot_field("grady", "X", "Y", "Z")
 
-# u = ns.field(field=fx, field_mesh=(xp, yp), grid_sizing=[dx,dy], 
-#             coord_idx=[0,1], order=2, time=0,
-#             boundary=boundary, store_loc='center', do_interp=True)
+x, y = u.field_mesh
+X, Y = np.meshgrid(x, y, indexing='ij')
+# true_grad_y = 2*np.cos(2*X)*np.cos(2*Y)
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# ax.plot_surface(X, Y, grad_u, cmap='viridis')
+# ax.set_xlabel('X')
+# ax.set_ylabel('Y')
+# ax.set_zlabel('F')
+# plt.show()
+true_grad_x = -2*np.sin(2*X)*np.sin(2*Y)
+true_grad_y = 2*np.cos(2*X)*np.cos(2*Y)
 
-# u2 = ns.field(field=fx, field_mesh=(xp, yp), grid_sizing=[dx,dy], 
-#             coord_idx=[0,1], order=2, time=0,
-#             boundary=boundary, store_loc='y_surf', do_interp=True)
-# # grad_u = u.grad_x_2()
-# # grad_u = u.grad_y_2()
-# grad_u2 = u2.grad_y_2()
-# # grad_u.plot_field("grady", "X", "Y", "Z")
-
-# # new_g = grad_u-grad_u2
-# # new_g.plot_field("grady", "X", "Y", "Z")
-
-# x, y = u2.field_mesh
-# X, Y = np.meshgrid(x, y, indexing='ij')
-# # true_grad_y = 3*np.cos(2*X)*np.cos(3*Y)
-# # fig = plt.figure()
-# # ax = fig.add_subplot(111, projection='3d')
-# # ax.plot_surface(X, Y, grad_u, cmap='viridis')
-# # ax.set_xlabel('X')
-# # ax.set_ylabel('Y')
-# # ax.set_zlabel('F')
-# # plt.show()
-# true_grad_x = -2*np.sin(2*X)*np.sin(3*Y)
-# true_grad_y = 3*np.cos(2*X)*np.cos(3*Y)
-
-# print(la.norm((grad_u2.field).flatten("F") - true_grad_y.flatten("F"),np.inf))
+print(la.norm((grad_u.field).flatten("F") - true_grad_y.flatten("F"),np.inf))
 
 
 # nx = 100
@@ -132,19 +135,19 @@ import copy
 # D = copy.deepcopy(B[:,1,:])
 # print(C==D)
 # print(np.linspace(0,1,2))
-def transpose_helper(coord_idx, position):
-    # According to the coord_idx generate a anti/permutation that put position index at 0 index position and back
-    id = np.where(coord_idx == position)[0][0]
-    # print(id)
-    if id == 0:
-        return None, None
-    else:
-        perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
-        perm[:id] += 1
-        perm[id] = 0
-        anti_perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
-        anti_perm[1:id+1] -= 1
-        anti_perm[0] = id
-        return perm, anti_perm 
+# def transpose_helper(coord_idx, position):
+#     # According to the coord_idx generate a anti/permutation that put position index at 0 index position and back
+#     id = np.where(coord_idx == position)[0][0]
+#     # print(id)
+#     if id == 0:
+#         return None, None
+#     else:
+#         perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
+#         perm[:id] += 1
+#         perm[id] = 0
+#         anti_perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
+#         anti_perm[1:id+1] -= 1
+#         anti_perm[0] = id
+#         return perm, anti_perm 
     
-transpose_helper(np.array([0,1]), 1)
+# transpose_helper(np.array([0,1]), 1)

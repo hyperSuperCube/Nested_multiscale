@@ -117,145 +117,85 @@ class Field:
                 return order2_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
                        order2_helper(ny, self.grid_sizing[self.coord_idx[1]])
             if self.dim == 3:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                nz = self.mesh_size[self.coord_idx[2]]
-                return order2_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
-                       order2_helper(ny, self.grid_sizing[self.coord_idx[1]]),\
-                       order2_helper(nz, self.grid_sizing[self.coord_idx[2]])
+                nx, ny, nz = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]], self.mesh_size[self.coord_idx[2]]
+                dx, dy, dz = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]], self.grid_sizing[self.coord_idx[2]]
+                return  order2_helper(nx, dx),\
+                        order2_helper(ny, dy),\
+                        order2_helper(nz, dz)
         if self.order == 4:
             if self.dim == 1:
                 nx = self.mesh_size[self.coord_idx[0]]
                 return order4_helper(nx, self.grid_sizing[self.coord_idx[0]])
             if self.dim == 2:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                return  order4_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
-                        order4_helper(ny, self.grid_sizing[self.coord_idx[1]])
+                nx, ny = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]]
+                dx, dy = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]]
+                return  order4_helper(nx, dx),\
+                        order4_helper(ny, dy)
             if self.dim == 3:
-                ny = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                nz = self.mesh_size[self.coord_idx[2]]
-                return  order4_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
-                        order4_helper(ny, self.grid_sizing[self.coord_idx[1]]),\
-                        order4_helper(nz, self.grid_sizing[self.coord_idx[2]])
+                nx, ny, nz = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]], self.mesh_size[self.coord_idx[2]]
+                dx, dy, dz = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]], self.grid_sizing[self.coord_idx[2]]
+                return  order4_helper(nx, dx),\
+                        order4_helper(ny, dy),\
+                        order4_helper(nz, dz)
 
     def second_derivative_mat(self):
         ax = self.coord_idx[0]
         if self.order == 2:
+            def helper(nx, dx):
+                return (
+                    np.diag(np.ones(nx-1), 1)
+                    - 2*np.eye(nx)
+                    + np.diag(np.ones(nx-1), -1)
+                ) / dx**2
             # classic three‐point stencil:  [1, -2, 1] / Δx²
             if self.dim == 1:
                 nx = self.mesh_size[ax]
                 dx = self.grid_sizing[ax]
-                return (
-                    np.diag(np.ones(nx-1), 1)
-                    - 2*np.eye(nx)
-                    + np.diag(np.ones(nx-1), -1)
-                ) / dx**2
-
+                return helper(nx,dx)
             if self.dim == 2:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                dx = self.grid_sizing[self.coord_idx[0]]
-                dy = self.grid_sizing[self.coord_idx[1]]
-                D2x = (
-                    np.diag(np.ones(nx-1), 1)
-                    - 2*np.eye(nx)
-                    + np.diag(np.ones(nx-1), -1)
-                ) / dx**2
-                D2y = (
-                    np.diag(np.ones(ny-1), 1)
-                    - 2*np.eye(ny)
-                    + np.diag(np.ones(ny-1), -1)
-                ) / dy**2
+                nx, ny = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]]
+                dx, dy = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]]
+                D2x = helper(nx, dx)
+                D2y = helper(ny, dy)
                 return D2x, D2y
 
             if self.dim == 3:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                nz = self.mesh_size[self.coord_idx[2]]
-                dx = self.grid_sizing[self.coord_idx[0]]
-                dy = self.grid_sizing[self.coord_idx[1]]
-                dz = self.grid_sizing[self.coord_idx[2]]
-                D2x = (
-                    np.diag(np.ones(nx-1), 1)
-                    - 2*np.eye(nx)
-                    + np.diag(np.ones(nx-1), -1)
-                ) / dx**2
-                D2y = (
-                    np.diag(np.ones(ny-1), 1)
-                    - 2*np.eye(ny)
-                    + np.diag(np.ones(ny-1), -1)
-                ) / dy**2
-                D2z = (
-                    np.diag(np.ones(nz-1), 1)
-                    - 2*np.eye(nz)
-                    + np.diag(np.ones(nz-1), -1)
-                ) / dz**2
+                nx, ny, nz = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]], self.mesh_size[self.coord_idx[2]]
+                dx, dy, dz = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]], self.grid_sizing[self.coord_idx[2]]
+                D2x = helper(nx, dx)
+                D2y = helper(ny, dy)
+                D2z = helper(nz, dz)
                 return D2x, D2y, D2z
 
         if self.order == 4:
             # five‐point 4th‐order stencil: [-1, 16, -30, 16, -1]/(12 Δx²)
+            def helper(nx, dx):
+                return (
+                -np.diag(np.ones(nx-2),  2)
+                +16*np.diag(np.ones(nx-1), 1)
+                -30*np.eye(nx)
+                +16*np.diag(np.ones(nx-1),-1)
+                -np.diag(np.ones(nx-2), -2)
+                ) / (12*dx**2)
+
             if self.dim == 1:
                 nx = self.mesh_size[ax]
                 dx = self.grid_sizing[ax]
-                return (
-                    -np.diag(np.ones(nx-2),  2)
-                    +16*np.diag(np.ones(nx-1), 1)
-                    -30*np.eye(nx)
-                    +16*np.diag(np.ones(nx-1),-1)
-                    -np.diag(np.ones(nx-2), -2)
-                ) / (12*dx**2)
+                return helper(nx, dx)
 
             if self.dim == 2:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                dx = self.grid_sizing[self.coord_idx[0]]
-                dy = self.grid_sizing[self.coord_idx[1]]
-                D2x4 = (
-                    -np.diag(np.ones(nx-2),  2)
-                    +16*np.diag(np.ones(nx-1), 1)
-                    -30*np.eye(nx)
-                    +16*np.diag(np.ones(nx-1),-1)
-                    -np.diag(np.ones(nx-2), -2)
-                ) / (12*dx**2)
-                D2y4 = (
-                    -np.diag(np.ones(ny-2),  2)
-                    +16*np.diag(np.ones(ny-1), 1)
-                    -30*np.eye(ny)
-                    +16*np.diag(np.ones(ny-1),-1)
-                    -np.diag(np.ones(ny-2), -2)
-                ) / (12*dy**2)
+                nx, ny = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]]
+                dx, dy = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]]
+                D2x4 = helper(nx, dx)
+                D2y4 = helper(ny, dy)
                 return D2x4, D2y4
             
             if self.dim == 3:
-                nx = self.mesh_size[self.coord_idx[0]]
-                ny = self.mesh_size[self.coord_idx[1]]
-                nz = self.mesh_size[self.coord_idx[2]]
-                dx = self.grid_sizing[self.coord_idx[0]]
-                dy = self.grid_sizing[self.coord_idx[1]]
-                dz = self.grid_sizing[self.coord_idx[2]]
-                D2x4 = (
-                    -np.diag(np.ones(nx-2),  2)
-                    +16*np.diag(np.ones(nx-1), 1)
-                    -30*np.eye(nx)
-                    +16*np.diag(np.ones(nx-1),-1)
-                    -np.diag(np.ones(nx-2), -2)
-                ) / (12*dx**2)
-                D2y4 = (
-                    -np.diag(np.ones(ny-2),  2)
-                    +16*np.diag(np.ones(ny-1), 1)
-                    -30*np.eye(ny)
-                    +16*np.diag(np.ones(ny-1),-1)
-                    -np.diag(np.ones(ny-2), -2)
-                ) / (12*dy**2)
-                D2z4 = (
-                    -np.diag(np.ones(nz-2),  2)
-                    +16*np.diag(np.ones(nz-1), 1)
-                    -30*np.eye(nz)
-                    +16*np.diag(np.ones(nz-1),-1)
-                    -np.diag(np.ones(nz-2), -2)
-                ) / (12*dz**2)
+                nx, ny, nz = self.mesh_size[self.coord_idx[0]], self.mesh_size[self.coord_idx[1]], self.mesh_size[self.coord_idx[2]]
+                dx, dy, dz = self.grid_sizing[self.coord_idx[0]], self.grid_sizing[self.coord_idx[1]], self.grid_sizing[self.coord_idx[2]]
+                D2x4 = helper(nx, dx)
+                D2y4 = helper(ny, dy)
+                D2z4 = helper(nz, dz)
                 return D2x4, D2y4, D2z4
 
     def grad_x_2(self):
@@ -340,49 +280,50 @@ class Field:
         pass
 
     def laplace_2(self):
+        """
+            To Do : : After calculating the laplace, the boundary is automatically updated 
+        """
         bc = self.boundary
         if self.dim == 1:
             D2x = self.second_derivative_mat()
-            ulb, urb = 0, 0
-            if bc['type'][0] == "Dirichlet":
-                ulb = self.enforce_dirichlet_2(0)
-            if bc['type'][1] == "Dirichlet":
-                urb = self.enforce_dirichlet_2(1)
+            ubs = []
+            for i in range(2):
+                if bc['type'][i] == "Dirichlet":
+                    ubs.append(self.enforce_dirichlet_2(i))
+                elif bc['type'][i] == "Nuemann":
+                    pass
             d2fdx2 = D2x@self.field
-            d2fdx2[0]  += ulb/(self.grid_sizing[self.coord_idx[0]])**2
-            d2fdx2[-1] += urb/(self.grid_sizing[self.coord_idx[0]])**2
+            d2fdx2[0]  += ubs[0]/(self.grid_sizing[self.coord_idx[0]])**2
+            d2fdx2[-1] += ubs[1]/(self.grid_sizing[self.coord_idx[0]])**2
             return Field(d2fdx2, self.field_mesh, self.grid_sizing, 
                              self.coord_idx, self.order, self.time, 
                              self.boundary, self.store_loc, False)
         elif self.dim == 2:
             D2x, D2y = self.second_derivative_mat()
-            ulb, urb, ubb, uub = 0,0,0,0
             idx, idy = self.coord_idx[0], self.coord_idx[1]
-            if bc['type'][0] == "Dirichlet":
-                ulb = self.enforce_dirichlet_2(0)
-            if bc['type'][1] == "Dirichlet":
-                urb = self.enforce_dirichlet_2(1)
-            if bc['type'][2] == "Dirichlet":
-                ubb = self.enforce_dirichlet_2(2)
-            if bc['type'][3] == "Dirichlet":
-                uub = self.enforce_dirichlet_2(3)
+            ubs = []
+            for i in range(4):
+                if bc['type'][i] == "Dirichlet":
+                    ubs.append(self.enforce_dirichlet_2(i))
+                elif bc['type'][i] == "Nuemann":
+                    pass
             d2fdx2, d2fdy2 = 0, 0
             if idx == 0:
                 d2fdx2 = D2x @ self.field
                 d2fdy2 = self.field @ (D2y.T)
-                d2fdx2[0]  += ulb/(self.grid_sizing[idx])**2
-                d2fdx2[-1] += urb/(self.grid_sizing[idx])**2
+                d2fdx2[0]  += ubs[0]/(self.grid_sizing[idx])**2
+                d2fdx2[-1] += ubs[1]/(self.grid_sizing[idx])**2
 
-                d2fdy2[:,0]  += ubb/(self.grid_sizing[idy])**2
-                d2fdy2[:,-1] += uub/(self.grid_sizing[idy])**2
+                d2fdy2[:,0]  += ubs[2]/(self.grid_sizing[idy])**2
+                d2fdy2[:,-1] += ubs[3]/(self.grid_sizing[idy])**2
             elif idx == 1:
                 d2fdx2 = self.field @ (D2x.T)
                 d2fdy2 = D2y @ self.field
-                d2fdx2[:,0]  += ulb/(self.grid_sizing[idx])**2
-                d2fdx2[:,-1] += urb/(self.grid_sizing[idx])**2
+                d2fdx2[:,0]  += ubs[0]/(self.grid_sizing[idx])**2
+                d2fdx2[:,-1] += ubs[1]/(self.grid_sizing[idx])**2
 
-                d2fdy2[0]  += ubb/(self.grid_sizing[idy])**2
-                d2fdy2[-1] += uub/(self.grid_sizing[idy])**2
+                d2fdy2[0]  += ubs[2]/(self.grid_sizing[idy])**2
+                d2fdy2[-1] += ubs[3]/(self.grid_sizing[idy])**2
             return Field(d2fdx2+d2fdy2, self.field_mesh, self.grid_sizing, 
                         self.coord_idx, self.order, self.time, 
                         self.boundary, self.store_loc, False)
@@ -395,7 +336,7 @@ class Field:
     
     # This is the general purpose interpolator, using convolution to get a new Field instance
     @staticmethod
-    def interpolator_general(field, coord_idx, bc_vals, map):
+    def interpolator_general_2(field, coord_idx, bc_vals, map):
         print(map)
         def vector_avg(vec, bm, bp, type):
             '''
@@ -517,6 +458,7 @@ class Field:
         elif self.dim == 3:
             pass
         self.store_loc = "y_surf"
+    
     def interpolate_to_z_surf(self):
         pass
 
@@ -548,7 +490,6 @@ class Field:
                 self.field_mesh = (new_y, new_x)
         self.store_loc = 'center'
 
-
     def get_boundary_value(self, position):
         """
             This function is used for obtaining the nodal boundary value from 
@@ -560,6 +501,7 @@ class Field:
                 ub_f = bc["value"][position]
                 return ub_f(self.time)
             elif bc["type"][position] == "Nuemann":
+                # Get the boundary value fron Nuemann boundary
                 pass
         if self.dim == 2:
             idx, idy = self.coord_idx[0], self.coord_idx[1]
@@ -578,148 +520,65 @@ class Field:
             This function return the ghost node/line/face value at specified position
             for the second order calculation.
         '''
-        ulb_ghost = 0
-        urb_ghost = 0
-        if self.dim == 1:
-            x_mesh = self.field_mesh[0]
-            if position == 0:
-                ulb_f = self.boundary['value'][0]
-                ulb_ghost = 0
-                if self.store_loc == "center":
-                    ulb_ghost = 2*ulb_f(self.time) - self.field[0]
-                elif self.store_loc == "x_surf":
-                    ulb_ghost = ulb_f(self.time)
-                return ulb_ghost
-            elif position == 1:
-                urb_f = self.boundary['value'][1]
-                urb_ghost = 0
-                if self.store_loc == "center":
-                    urb_ghost = 2*urb_f(self.time) - self.field[-1]
-                elif self.store_loc == "x_surf":
-                    urb_ghost = urb_f(self.time)
-                return urb_ghost
+        if self.dim == 1:  
+            ub_f = self.boundary['value'][position]
+            if self.store_loc == "center":
+                ub_ghost = 2*ub_f(self.time) - self.field[position*(-1)]
+                return ub_ghost
+            elif self.store_loc == "x_surf":
+                ub_ghost = ub_f(self.time)
+                return ub_ghost
         elif self.dim == 2:
-            idx = self.coord_idx[0]
-            idy = self.coord_idx[1]
-            if idx == 0:
-                x_mesh, y_mesh = self.field_mesh
-            else:
-                y_mesh, x_mesh = self.field_mesh
-            if position == 0:
-                # Enforce at face (-1,0)
-                ulb_f = self.boundary['value'][0]
-                
-                if self.store_loc == "center":
-                    u_int = 0
-                    if idx == 0:
-                        u_int = self.field[0]
-                    else:
-                        u_int = self.field[:,0]
-                    ulb_ghost = 2*ulb_f(y_mesh, self.time) - u_int
-                elif self.store_loc == "x_surf":
-                    ulb_ghost = ulb_f(y_mesh, self.time)
-                elif self.store_loc == "y_surf":
-                    u_int = 0
-                    if idx == 0:
-                        u_int = self.field[0]
-                    else:
-                        u_int = self.field[:,0]
-                    ulb_ghost = 2*ulb_f(y_mesh, self.time) - u_int
-                return ulb_ghost
-            if position == 1:
-                # Enforce at face (1,0)
-                urb_f = self.boundary['value'][1]
-                # Pick out the field value the right boundary
-                if self.store_loc == "center":
-                    u_int = 0
-                    if idx == 0:
-                        u_int = self.field[-1]
-                    else:
-                        u_int = self.field[:,-1]
-                    urb_ghost = 2*urb_f(y_mesh, self.time) - u_int
-                elif self.store_loc == "x_surf":
-                    urb_ghost = urb_f(y_mesh, self.time)
-                elif self.store_loc == "y_surf":
-                    u_int = 0
-                    if idx == 0:
-                        u_int = self.field[-1]
-                    else:
-                        u_int = self.field[:,-1]
-                    urb_ghost = 2*urb_f(y_mesh, self.time) - u_int
-                return urb_ghost
-            if position == 2:
-                # Enforce at face (0,-1)
-                # Pick out the field value at the bottom boundary
-                ubb_f = self.boundary['value'][2]
-                if self.store_loc == "center":
-                    u_int = 0
-                    if idy == 0:
-                        u_int = self.field[0]
-                    else:
-                        u_int = self.field[:,0]
-                    ubb_ghost = 2*ubb_f(x_mesh, self.time) - u_int
-                elif self.store_loc == "x_surf":
-                    u_int = 0
-                    if idy == 0:
-                        u_int = self.field[0]
-                    else:
-                        u_int = self.field[:,0]
-                    ubb_ghost = 2*ubb_f(x_mesh, self.time) - u_int
-                elif self.store_loc == "y_surf":
-                    ubb_ghost = ubb_f(x_mesh, self.time)
-                return ubb_ghost
-            if position == 3:
-                # Enforce at face (0,-1)
-                # Pick out the field value at the bottom boundary
-                uub_f = self.boundary['value'][3]
-                if self.store_loc == "center":
-                    u_int = 0
-                    if idy == 0:
-                        u_int = self.field[-1]
-                    else:
-                        u_int = self.field[:,-1]
-                    uub_ghost = 2*uub_f(x_mesh, self.time) - u_int
-                elif self.store_loc == "x_surf":
-                    u_int = 0
-                    if idy == 0:
-                        u_int = self.field[-1]
-                    else:
-                        u_int = self.field[:,-1]
-                    uub_ghost = 2*uub_f(x_mesh, self.time) - u_int
-                elif self.store_loc == "y_surf":
-                    uub_ghost = uub_f(x_mesh, self.time)
-                return uub_ghost
+            idx, idy = self.coord_idx[0], self.coord_idx[1]
+            ub_f = self.boundary['value'][position]
+            ax = idx if position < 2 else idy
+            u_int = np.take(self.field, (-1)*(position%2), axis=ax)
+            if self.store_loc == "center":
+                ub_ghost = 2*ub_f(self.field_mesh[1-ax], self.time) - u_int
+                return ub_ghost
+            elif self.store_loc == "x_surf":
+                if position == 0 or position == 1:
+                    ub_ghost = ub_f(self.field_mesh[1-ax], self.time)
+                    return ub_ghost
+                elif position == 2 or position == 3:
+                    ub_ghost = 2*ub_f(self.field_mesh[1-ax], self.time) - u_int
+                    return ub_ghost
+            elif self.store_loc == "y_surf":
+                if position == 2 or position == 3:
+                    ub_ghost = ub_f(self.field_mesh[1-ax], self.time)
+                    return ub_ghost
+                elif position == 0 or position == 1:
+                    ub_ghost = 2*ub_f(self.field_mesh[1-ax], self.time) - u_int
+                    return ub_ghost
         elif self.dim == 3:
             pass
             # TO DO
-
+    
+    def enfoce_dirichlet4(self, position):
+        pass
             
-    def enforce_Nuemann2(self, position):
+    def enforce_nuemann2(self, position):
         pass
 
-    def enforce_Periodic2(self, position):
+    def enforce_periodic2(self, position):
         pass
 
-    def enforce_Robin2(self, position):
+    def enforce_robin2(self, position):
         pass
 
-    def enfoce_Dirichlet4(self, position):
+    def enforce_nuemann4(self, position):
         pass
 
-    def enforce_Nuemann4(self, position):
+    def enforce_periodic4(self, position):
         pass
 
-    def enforce_Periodic4(self, position):
-        pass
-
-    def enforce_Robin4(self, position):
+    def enforce_robin4(self, position):
         pass
 
     def time_increament(self,dt):
         self.time += dt
 
     # Plotting tools 
-
     def plot_field(self, label, xlabel, ylabel, zlabel=None, dpi=300):
         if self.dim == 1:
             plt.figure(dpi=dpi)
@@ -749,40 +608,43 @@ class Field:
 @Field.__mul__.register
 def _(self: Field, other_field: Field) -> Field:
     if (self.store_loc == other_field.store_loc):
-            '''FIX ME'''
-            ## Boundary needs to be considered FIX ME
+            """
+                For operator overloading, we regard the addee is the correction of the adder
+                Thus, the boundary condition of the addee should not affect the boundary of the
+                addor
+            """
+            # Interpolate mesh of other field to same location of the current mesh
             return Field(self.field*other_field.field, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
     else:
-        # Interpolate mesh of other field to same location of the current mesh
-        print("Not recommended in numerical comupation! Unexpected behaviour may arise.")
-        if self.dim ==1:
-            new_x = self.field_mesh[0]
-            interp = other_field.interpolator
-            new_field_other = interp(new_x)
-            return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
-                            self.coord_idx, self.order, self.time, 
-                            self.boundary, self.store_loc, False)
-        elif self.dim == 2:
-            idx, idy = self.coord_idx[0], self.coord_idx[1]
-            new_x, new_y = self.field_mesh[idx], self.field_mesh[idy]
-            interp = other_field.interpolator 
-            if idx == 0:
-                new_field_other = interp(new_x, new_y)
-            else:
-                new_field_other = interp(new_y, new_x)
-            return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
-                            self.coord_idx, self.order, self.time, 
-                            self.boundary, self.store_loc, False)
+        if self.order == 2:
+            if self.dim ==1:
+                new_x = self.field_mesh[0]
+                interp = other_field.interpolator
+                new_field_other = interp(new_x)
+                return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
+                                self.coord_idx, self.order, self.time, 
+                                self.boundary, self.store_loc, False)
+            elif self.dim == 2:
+                ulb, urb, ubb, uub = self.get_boundary_value(0), self.get_boundary_value(1), self.get_boundary_value(2), self.get_boundary_value(3)
+                bc_vals = [ulb, urb, ubb, uub]
+                tgt_loc = self.store_loc
+                src_loc = other_field.store_loc
+                map = src_loc[0] + "2" + tgt_loc[0]
+                new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
+                return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
+                                self.coord_idx, self.order, self.time, 
+                                self.boundary, self.store_loc, False)
         
 @Field.__add__.register
 def _(self: Field, other_field: Field) -> Field:       
     if (self.store_loc == other_field.store_loc):
             """
-                FIX ME
+                For operator overloading, we regard the addee is the correction of the adder
+                Thus, the boundary condition of the addee should not affect the boundary of the
+                addor
             """
-            ## Boundary needs to be considered
             return Field(self.field+other_field.field, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
@@ -796,25 +658,26 @@ def _(self: Field, other_field: Field) -> Field:
                         self.coord_idx, self.order, self.time, 
                         self.boundary, self.store_loc, False)
         elif self.dim == 2:
-            idx, idy = self.coord_idx[0], self.coord_idx[1]
-            new_x, new_y = self.field_mesh[idx], self.field_mesh[idy]
-            interp = other_field.interpolator 
-            if idx == 0:
-                new_field_other = interp(new_x, new_y)
-            else:
-                new_field_other = interp(new_y, new_x)
+            ulb, urb, ubb, uub = self.get_boundary_value(0), self.get_boundary_value(1), self.get_boundary_value(2), self.get_boundary_value(3)
+            bc_vals = [ulb, urb, ubb, uub]
+            tgt_loc = self.store_loc
+            src_loc = other_field.store_loc
+            map = src_loc[0] + "2" + tgt_loc[0]
+            new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
             return Field(self.field+new_field_other, self.field_mesh, self.grid_sizing, 
-                        self.coord_idx, self.order, self.time, 
-                        self.boundary, self.store_loc, False)
+                            self.coord_idx, self.order, self.time, 
+                            self.boundary, self.store_loc, False)
         elif self.dim == 3:
             pass
 
 @Field.__sub__.register
 def _(self: Field, other_field: Field) -> Field:  
     if (self.store_loc == other_field.store_loc):
-
-            '''FIX ME'''
-            ## Boundary needs to be considered FIX ME
+            """
+                For operator overloading, we regard the addee is the correction of the adder
+                Thus, the boundary condition of the addee should not affect the boundary of the
+                addor
+            """
             return Field(self.field-other_field.field, self.field_mesh, self.grid_sizing, 
                              self.coord_idx, self.order, self.time, 
                              self.boundary, self.store_loc, False)
@@ -828,13 +691,12 @@ def _(self: Field, other_field: Field) -> Field:
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
         elif self.dim == 2:
-            idx, idy = self.coord_idx[0], self.coord_idx[1]
-            new_x, new_y = self.field_mesh[idx], self.field_mesh[idy]
-            interp = other_field.interpolator 
-            if idx == 0:
-                new_field_other = interp(new_x, new_y)
-            else:
-                new_field_other = interp(new_y, new_x)
+            ulb, urb, ubb, uub = self.get_boundary_value(0), self.get_boundary_value(1), self.get_boundary_value(2), self.get_boundary_value(3)
+            bc_vals = [ulb, urb, ubb, uub]
+            tgt_loc = self.store_loc
+            src_loc = other_field.store_loc
+            map = src_loc[0] + "2" + tgt_loc[0]
+            new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
             return Field(self.field-new_field_other, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
@@ -845,10 +707,13 @@ def _(self: Field, other_field: Field) -> Field:
 def _(self: Field, other_field: Field) -> Field:  
     if (self.store_loc == other_field.store_loc):
 
-            '''FIX ME'''
-            ## Boundary needs to be considered FIX ME
+            """
+                For operator overloading, we regard the addee is the correction of the adder
+                Thus, the boundary condition of the addee should not affect the boundary of the
+                addor
+            """
 
-            return Field(self.field/(other_field.field+1e-15), self.field_mesh, self.grid_sizing, 
+            return Field(self.field/(other_field.field+1e-14), self.field_mesh, self.grid_sizing, 
                                 self.coord_idx, self.order, self.time, 
                                 self.boundary, self.store_loc, False)
     else:
@@ -861,16 +726,15 @@ def _(self: Field, other_field: Field) -> Field:
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
         elif self.dim == 2:
-            idx, idy = self.coord_idx[0], self.coord_idx[1]
-            new_x, new_y = self.field_mesh[idx], self.field_mesh[idy]
-            interp = other_field.interpolator 
-            if idx == 0:
-                new_field_other = interp(new_x, new_y)
-            else:
-                new_field_other = interp(new_y, new_x)
-            return Field(self.field/(new_field_other+1e-15), self.field_mesh, self.grid_sizing, 
-                            self.coord_idx, self.order, self.time, 
-                            self.boundary, self.store_loc, False)
+                ulb, urb, ubb, uub = self.get_boundary_value(0), self.get_boundary_value(1), self.get_boundary_value(2), self.get_boundary_value(3)
+                bc_vals = [ulb, urb, ubb, uub]
+                tgt_loc = self.store_loc
+                src_loc = other_field.store_loc
+                map = src_loc[0] + "2" + tgt_loc[0]
+                new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
+                return Field(self.field/(new_field_other+1e-14), self.field_mesh, self.grid_sizing, 
+                                self.coord_idx, self.order, self.time, 
+                                self.boundary, self.store_loc, False)
         elif self.dim == 3:
             pass
 

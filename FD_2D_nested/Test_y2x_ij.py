@@ -1,8 +1,8 @@
 import NS as ns
 import numpy as np
 from matplotlib import pyplot as plt
-nx = 11
-ny = 11
+nx = 101
+ny = 101
 
 xp = np.linspace(0,1,nx)
 yp = np.linspace(0,1,ny)
@@ -44,9 +44,9 @@ boundaryY = {
 }
 
 Fxy = fxy(X, Y)
-field = ns.Field(Fxy, [xp, yp], [dx, dy], [0,1], 2, 0, boundary, "x_surf", True)
+field = ns.Field(Fxy, [xp, yp], [dx, dy], [0,1], 2, 0, boundary, "y_surf", True)
 
-Xfield = ns.Field(X, [xp, yp], [dx, dy], [0,1], 2, 0, boundaryX, "x_surf", True)
+Xfield = ns.Field(X, [xp, yp], [dx, dy], [0,1], 2, 0, boundaryX, "y_surf", True)
 
 xfield_xmesh, xfield_ymesh = Xfield.field_mesh
 
@@ -58,9 +58,9 @@ Bu = bu(xfield_xmesh,0)
 
 X_xmesh, X_ymesh = np.meshgrid(xfield_xmesh, xfield_ymesh, indexing='ij')
 
-interpFxy = ns.Field.interpolator_general(field.field, np.array([0,1]), [Bl, Br, Bb, Bu], "x2y")
-interpX = ns.Field.interpolator_general(X_xmesh, np.array([0,1]), [0, 1, Xfield.field_mesh[0], Xfield.field_mesh[0]], "x2y")
-interpY = ns.Field.interpolator_general(X_ymesh, np.array([0,1]), [Xfield.field_mesh[1], Xfield.field_mesh[1], 0, 1], "x2y")
+interpFxy = ns.Field.interpolator_general(field.field, np.array([0,1]), [Bl, Br, Bb, Bu], "y2x")
+interpX = ns.Field.interpolator_general(X_xmesh, np.array([0,1]), [0, 1, Xfield.field_mesh[0], Xfield.field_mesh[0]], "y2x")
+interpY = ns.Field.interpolator_general(X_ymesh, np.array([0,1]), [Xfield.field_mesh[1], Xfield.field_mesh[1], 0, 1], "y2x")
 # print(interpX.shape)
 a = 0
 b = 1
