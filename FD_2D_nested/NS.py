@@ -103,38 +103,42 @@ class Field:
         return NotImplemented
 
     def first_derivative_mat(self):
+        def order2_helper(n, d):
+            return (np.diag(np.ones(n-1),1) - np.diag(np.ones(n-1),-1))*1/2/d
+        def order4_helper(n, d):
+            return (8*np.diag(np.ones(n-1),1) + np.diag(-np.ones(n-2),2) - 8*np.diag(np.ones(n-1),-1) + np.diag(np.ones(n-2),-2))*1/12/d
         if self.order == 2:
             if self.dim == 1:
                 nx = self.mesh_size[self.coord_idx[0]]
-                return  (np.diag(np.ones(nx-1),1) - np.diag(np.ones(nx-1),-1))*1/2/self.grid_sizing[self.coord_idx[0]]
+                return order2_helper(nx, self.grid_sizing[self.coord_idx[0]])
             if self.dim == 2:
                 nx = self.mesh_size[self.coord_idx[0]]
                 ny = self.mesh_size[self.coord_idx[1]]
-                return  (np.diag(np.ones(nx-1),1) - np.diag(np.ones(nx-1),-1))*1/2/self.grid_sizing[self.coord_idx[0]],\
-                        (np.diag(np.ones(ny-1),1) - np.diag(np.ones(ny-1),-1))*1/2/self.grid_sizing[self.coord_idx[1]]
+                return order2_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
+                       order2_helper(ny, self.grid_sizing[self.coord_idx[1]])
             if self.dim == 3:
                 nx = self.mesh_size[self.coord_idx[0]]
                 ny = self.mesh_size[self.coord_idx[1]]
                 nz = self.mesh_size[self.coord_idx[2]]
-                return  (np.diag(np.ones(nx-1),1) - np.diag(np.ones(nx-1),-1))*1/2/self.grid_sizing[self.coord_idx[0]],\
-                        (np.diag(np.ones(ny-1),1) - np.diag(np.ones(ny-1),-1))*1/2/self.grid_sizing[self.coord_idx[1]],\
-                        (np.diag(np.ones(nz-1),1) - np.diag(np.ones(nz-1),-1))*1/2/self.grid_sizing[self.coord_idx[2]]
+                return order2_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
+                       order2_helper(ny, self.grid_sizing[self.coord_idx[1]]),\
+                       order2_helper(nz, self.grid_sizing[self.coord_idx[2]])
         if self.order == 4:
             if self.dim == 1:
                 nx = self.mesh_size[self.coord_idx[0]]
-                return (8*np.diag(np.ones(nx-1),1) + np.diag(-np.ones(nx-2),2) - 8*np.diag(np.ones(nx-1),-1) + np.diag(np.ones(nx-2),-2))*1/12/self.grid_sizing[self.coord_idx[0]]
+                return order4_helper(nx, self.grid_sizing[self.coord_idx[0]])
             if self.dim == 2:
                 nx = self.mesh_size[self.coord_idx[0]]
                 ny = self.mesh_size[self.coord_idx[1]]
-                return  (8*np.diag(np.ones(nx-1),1) + np.diag(-np.ones(nx-2),2) - 8*np.diag(np.ones(nx-1),-1) + np.diag(np.ones(nx-2),-2))*1/12/self.grid_sizing[self.coord_idx[0]],\
-                        (8*np.diag(np.ones(ny-1),1) + np.diag(-np.ones(ny-2),2) - 8*np.diag(np.ones(ny-1),-1) + np.diag(np.ones(ny-2),-2))*1/12/self.grid_sizing[self.coord_idx[1]]
+                return  order4_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
+                        order4_helper(ny, self.grid_sizing[self.coord_idx[1]])
             if self.dim == 3:
                 ny = self.mesh_size[self.coord_idx[0]]
                 ny = self.mesh_size[self.coord_idx[1]]
                 nz = self.mesh_size[self.coord_idx[2]]
-                return  (8*np.diag(np.ones(nx-1),1) + np.diag(-np.ones(nx-2),2) - 8*np.diag(np.ones(nx-1),-1) + np.diag(np.ones(nx-2),-2))*1/12/self.grid_sizing[self.coord_idx[0]],\
-                        (8*np.diag(np.ones(ny-1),1) + np.diag(-np.ones(ny-2),2) - 8*np.diag(np.ones(ny-1),-1) + np.diag(np.ones(ny-2),-2))*1/12/self.grid_sizing[self.coord_idx[1]],\
-                        (8*np.diag(np.ones(nz-1),1) + np.diag(-np.ones(nz-2),2) - 8*np.diag(np.ones(nz-1),-1) + np.diag(np.ones(nz-2),-2))*1/12/self.grid_sizing[self.coord_idx[2]]
+                return  order4_helper(nx, self.grid_sizing[self.coord_idx[0]]),\
+                        order4_helper(ny, self.grid_sizing[self.coord_idx[1]]),\
+                        order4_helper(nz, self.grid_sizing[self.coord_idx[2]])
 
     def second_derivative_mat(self):
         ax = self.coord_idx[0]
@@ -223,7 +227,7 @@ class Field:
                     -np.diag(np.ones(ny-2), -2)
                 ) / (12*dy**2)
                 return D2x4, D2y4
-
+            
             if self.dim == 3:
                 nx = self.mesh_size[self.coord_idx[0]]
                 ny = self.mesh_size[self.coord_idx[1]]
@@ -253,7 +257,6 @@ class Field:
                     -np.diag(np.ones(nz-2), -2)
                 ) / (12*dz**2)
                 return D2x4, D2y4, D2z4
-
 
     def grad_x_2(self):
         '''
@@ -391,14 +394,77 @@ class Field:
         pass
     
     # This is the general purpose interpolator, using convolution to get a new Field instance
-    def interpolator_general(self, new_loc):
-        def x_average():
-            pass
-        def y_average():
-            pass
-        def convolution():
-            pass
-        pass
+    @staticmethod
+    def interpolator_general(field, coord_idx, bc_vals, map):
+        print(map)
+        def vector_avg(vec, bm, bp, type):
+            '''
+                Doing average along the first dimension direction
+            '''
+            if type == "x2c" or type == "y2c" or type == "z2c":
+                new_shape = list(vec.shape)
+                new_shape[0] += 1
+                new_shape = tuple(new_shape)
+                toReturn = np.zeros(new_shape)
+                toReturn[0] = (vec[0]+bm)/2
+                toReturn[-1] = (vec[-1]+bp)/2
+                toReturn[1:-1] = (vec[1:]+vec[:-1])/2
+                return toReturn
+            elif type == "c2x" or type == "c2y" or type == "c2z":
+                return (vec[1:]+vec[:-1])/2
+        def transpose_helper(coord_idx, position):
+            # According to the coord_idx generate a anti/permutation that put position index at 0 index position and back
+            id = np.where(coord_idx == position)[0][0]
+            if id == 0:
+                tag = -np.ones(len(coord_idx),dtype=int)
+                return tag, tag
+            else:
+                perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
+                perm[:id] += 1
+                perm[id] = 0
+                anti_perm = np.linspace(0,len(coord_idx)-1,len(coord_idx),dtype=int)
+                anti_perm[1:id+1] -= 1
+                anti_perm[0] = id
+                return perm, anti_perm 
+        # Transpose field to the correct position, field is indexed by coord_idx
+        if map == "x2c" or map == "c2x":
+            perm, anti_perm = transpose_helper(coord_idx, 0)
+            if (perm == -np.ones(len(coord_idx),dtype=int)).all():
+                return vector_avg(field, bc_vals[0], bc_vals[1], map)
+            field = field.transpose(perm)
+            return vector_avg(field, bc_vals[0], bc_vals[1], map).transpose(anti_perm)
+        elif map == "y2c" or map == "c2y":
+            perm, anti_perm = transpose_helper(coord_idx, 1)
+            if (perm == -np.ones(len(coord_idx),dtype=int)).all():
+                return vector_avg(field, bc_vals[2], bc_vals[3], map)
+            field = field.transpose(perm)
+            return vector_avg(field, bc_vals[2], bc_vals[3], map).transpose(anti_perm)
+        elif map == "z2c" or map == "c2z":
+            perm, anti_perm = transpose_helper(coord_idx, 2)
+            if (perm == -np.ones(len(coord_idx),dtype=int)).all():
+                return vector_avg(field, bc_vals[4], bc_vals[5], map)
+            field = field.transpose(perm)
+            return vector_avg(field, bc_vals[4], bc_vals[5], map).transpose(anti_perm)
+        elif map == "x2y":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"x2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2y")
+        elif map == "y2x":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"y2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2x")
+        elif map == "x2z":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"x2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2z")
+        elif map == "z2x":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"z2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2z")
+        elif map == "y2z":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"y2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2z")
+        elif map == "z2y":
+            temp = Field.interpolator_general(field, coord_idx, bc_vals,"z2c")
+            return Field.interpolator_general(temp, coord_idx, bc_vals,"c2y")
+        else:
+            return None
 
     ## The following 3 interpolator are mearly used for initilization NOT GENRAL PURPOSE!! (for calling simplicity)
     def interpolate_to_x_surf(self):
@@ -481,6 +547,31 @@ class Field:
                 self.field = self.interpolator(new_y, new_x)
                 self.field_mesh = (new_y, new_x)
         self.store_loc = 'center'
+
+
+    def get_boundary_value(self, position):
+        """
+            This function is used for obtaining the nodal boundary value from 
+            Dirichlet / Nuemann / Robin / Periodic
+        """
+        bc = self.boundary
+        if self.dim == 1:
+            if bc["type"][position] == "Dirichlet":
+                ub_f = bc["value"][position]
+                return ub_f(self.time)
+            elif bc["type"][position] == "Nuemann":
+                pass
+        if self.dim == 2:
+            idx, idy = self.coord_idx[0], self.coord_idx[1]
+            x_mesh, y_mesh = self.field_mesh[idx], self.field_mesh[idy]
+            if bc["type"][position] == "Dirichlet":
+                ub_f = bc["value"][position]
+                if position == 0 or position == 1:
+                    return ub_f(y_mesh, self.time)
+                else:
+                    return ub_f(x_mesh, self.time)
+            elif bc["type"][position] == "Nuemann":
+                pass
 
     def enforce_dirichlet_2(self, position):
         '''
@@ -641,7 +732,10 @@ class Field:
             idx, idy = self.coord_idx
             fig = plt.figure(dpi=dpi)
             ax = fig.add_subplot(111, projection='3d')
-            X, Y = np.meshgrid(self.field_mesh[idx], self.field_mesh[idy], indexing='ij')
+            tag = 'xy'
+            if idx == 0:
+                tag = 'ij'
+            X, Y = np.meshgrid(self.field_mesh[idx], self.field_mesh[idy], indexing=tag)
             ax.plot_surface(X, Y, self.field, cmap='viridis', label=label)
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
