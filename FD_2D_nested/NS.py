@@ -620,9 +620,12 @@ def _(self: Field, other_field: Field) -> Field:
     else:
         if self.order == 2:
             if self.dim ==1:
-                new_x = self.field_mesh[0]
-                interp = other_field.interpolator
-                new_field_other = interp(new_x)
+                ulb, urb = self.get_boundary_value(0), self.get_boundary_value(1)
+                bc_vals = [ulb, urb]
+                tgt_loc = self.store_loc
+                src_loc = other_field.store_loc
+                map = src_loc[0] + "2" + tgt_loc[0]
+                new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
                 return Field(self.field*new_field_other, self.field_mesh, self.grid_sizing, 
                                 self.coord_idx, self.order, self.time, 
                                 self.boundary, self.store_loc, False)
@@ -651,9 +654,12 @@ def _(self: Field, other_field: Field) -> Field:
     else:
         # Interpolate mesh of other field to same location of the current mesh
         if self.dim ==1:
-            new_x = self.field_mesh[0]
-            interp = other_field.interpolator
-            new_field_other = interp(new_x)
+            ulb, urb = self.get_boundary_value(0), self.get_boundary_value(1)
+            bc_vals = [ulb, urb]
+            tgt_loc = self.store_loc
+            src_loc = other_field.store_loc
+            map = src_loc[0] + "2" + tgt_loc[0]
+            new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
             return Field(self.field+new_field_other, self.field_mesh, self.grid_sizing, 
                         self.coord_idx, self.order, self.time, 
                         self.boundary, self.store_loc, False)
@@ -684,9 +690,12 @@ def _(self: Field, other_field: Field) -> Field:
     else:
         # Interpolate mesh of other field to same location of the current mesh
         if self.dim ==1:
-            new_x = self.field_mesh[0]
-            interp = other_field.interpolator
-            new_field_other = interp(new_x)
+            ulb, urb = self.get_boundary_value(0), self.get_boundary_value(1)
+            bc_vals = [ulb, urb]
+            tgt_loc = self.store_loc
+            src_loc = other_field.store_loc
+            map = src_loc[0] + "2" + tgt_loc[0]
+            new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
             return Field(self.field-new_field_other, self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
@@ -719,9 +728,12 @@ def _(self: Field, other_field: Field) -> Field:
     else:
         # Interpolate mesh of other field to same location of the current mesh
         if self.dim ==1:
-            new_x = self.field_mesh[0]
-            interp = other_field.interpolator
-            new_field_other = interp(new_x)
+            ulb, urb = self.get_boundary_value(0), self.get_boundary_value(1)
+            bc_vals = [ulb, urb]
+            tgt_loc = self.store_loc
+            src_loc = other_field.store_loc
+            map = src_loc[0] + "2" + tgt_loc[0]
+            new_field_other = Field.interpolator_general_2(other_field. field, self.coord_idx, bc_vals, map)
             return Field(self.field/(new_field_other+1e-15), self.field_mesh, self.grid_sizing, 
                             self.coord_idx, self.order, self.time, 
                             self.boundary, self.store_loc, False)
